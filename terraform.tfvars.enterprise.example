@@ -1,0 +1,280 @@
+# ============================================================================
+# Example Terraform Variables for RHEL 7 Enterprise Module Deployment
+# ============================================================================
+# Copy this file to terraform.tfvars and customize the values
+# Usage: cp terraform.tfvars.enterprise.example terraform.tfvars
+# ============================================================================
+
+# ============================================================================
+# AWS Configuration
+# ============================================================================
+
+# AWS region where resources will be created
+aws_region = "us-east-1"
+
+# Project name used for resource naming and tagging
+project_name = "my-rhel-project"
+
+# Environment name (dev, staging, prod)
+environment = "production"
+
+# ============================================================================
+# Required Parameters
+# ============================================================================
+
+# EC2 instance type - Choose based on workload requirements
+# Development: t3.micro, t3.small
+# Production: t3.medium, m5.large, m5.xlarge
+# Compute-intensive: c5.large, c5.xlarge
+# Memory-optimized: r5.large, r5.xlarge
+enterprise_instance_type = "t3.micro"
+
+# EC2 key pair name for SSH access
+# IMPORTANT: This key pair must already exist in your AWS account in the target region
+# Create it first: aws ec2 create-key-pair --key-name my-rhel7-key --query 'KeyMaterial' --output text > my-rhel7-key.pem
+enterprise_key_name = "my-rhel7-key"
+
+# ============================================================================
+# Optional Core Parameters
+# ============================================================================
+
+# Name tag for the EC2 instance
+# Recommended format: {project}-{environment}-{purpose}-rhel7
+enterprise_instance_name = "my-project-prod-app-rhel7"
+
+# ============================================================================
+# Networking Configuration
+# ============================================================================
+
+# Subnet ID where instance will be deployed
+# Leave as null to use the default subnet from main infrastructure
+# Example: "subnet-0abc123def456789"
+enterprise_subnet_id = null
+
+# Security group IDs to attach to the instance
+# Leave as null to use the default security group from main infrastructure
+# Example: ["sg-0123456789abcdef0", "sg-0fedcba9876543210"]
+enterprise_security_group_ids = null
+
+# Availability zone for instance placement
+# Leave as null to use the first available AZ
+# Example: "us-east-1a"
+enterprise_availability_zone = null
+
+# Whether to assign a public IP address
+# Set to false for instances in private subnets
+enterprise_associate_public_ip = true
+
+# Private IP address to assign (optional)
+# Leave as null for automatic assignment
+# Must be within subnet CIDR range
+# Example: "10.0.1.100"
+enterprise_private_ip = null
+
+# ============================================================================
+# Storage Configuration
+# ============================================================================
+
+# Root volume type
+# Options: gp2 (standard), gp3 (better performance), io1/io2 (high performance)
+enterprise_root_volume_type = "gp3"
+
+# Root volume size in GB
+# Minimum: 10 GB for RHEL 7
+# Recommended: 20GB (dev), 50GB (small prod), 100GB+ (production)
+enterprise_root_volume_size = 20
+
+# Enable root volume encryption
+# Strongly recommended for production workloads
+enterprise_encrypt_root_volume = true
+
+# Delete volume when instance is terminated
+enterprise_delete_volume_on_termination = true
+
+# ============================================================================
+# Advanced Configuration
+# ============================================================================
+
+# User data script for instance initialization
+# This script runs on first boot
+enterprise_user_data = <<-EOF
+  #!/bin/bash
+  # RHEL 7 Instance Initialization Script
+  
+  # Update all packages
+  yum update -y
+  
+  # Install common utilities
+  yum install -y wget curl vim git htop net-tools
+  
+  # Install development tools (optional)
+  # yum groupinstall -y "Development Tools"
+  
+  # Install web server (optional)
+  # yum install -y httpd
+  # systemctl enable httpd
+  # systemctl start httpd
+  
+  # Create deployment log
+  echo "Instance initialized at $(date)" >> /var/log/terraform-deployment.log
+  echo "Hostname: $(hostname)" >> /var/log/terraform-deployment.log
+  echo "Instance ID: $(curl -s http://169.254.169.254/latest/meta-data/instance-id)" >> /var/log/terraform-deployment.log
+  
+  # Configure hostname
+  hostnamectl set-hostname $(curl -s http://169.254.169.254/latest/meta-data/local-hostname)
+  
+  # Enable automatic security updates
+  yum install -y yum-cron
+  systemctl enable yum-cron
+  systemctl start yum-cron
+  
+  # Configure firewall (optional)
+  # systemctl enable firewalld
+  # systemctl start firewalld
+  # firewall-cmd --permanent --add-service=http
+  # firewall-cmd --permanent --add-service=https
+  # firewall-cmd --reload
+EOF
+
+# IAM instance profile for AWS API access
+# Leave as null if not using IAM roles
+# Example: "app-server-role"
+enterprise_iam_instance_profile = null
+
+# Enable detailed CloudWatch monitoring
+# Provides 1-minute metrics instead of 5-minute (additional cost)
+enterprise_enable_monitoring = false
+
+# Enable EBS optimization for better storage performance
+# Recommended for production workloads
+enterprise_ebs_optimized = true
+
+# Protect instance from accidental termination
+# Set to true for production instances
+enterprise_disable_api_termination = false
+
+# Instance tenancy type
+# Options: default (shared), dedicated (dedicated hardware), host (dedicated host)
+enterprise_tenancy = "default"
+
+# ============================================================================
+# Resource Tagging
+# ============================================================================
+
+# Common tags applied to all resources
+enterprise_common_tags = {
+  # Organizational tags
+  Environment   = "production"
+  Project       = "my-rhel-project"
+  Owner         = "platform-team"
+  ManagedBy     = "terraform-enterprise"
+  
+  # Cost allocation tags
+  CostCenter    = "engineering"
+  Department    = "infrastructure"
+  
+  # Technical tags
+  OS            = "RHEL-7"
+  Application   = "web-application"
+  Component     = "app-server"
+  
+  # Operational tags
+  Backup        = "daily"
+  Monitoring    = "enabled"
+  Compliance    = "pci-dss"
+  
+  # Additional metadata
+  Repository    = "deployVM"
+  Module        = "terraform-enterprise"
+  CreatedBy     = "terraform"
+}
+
+# Additional tags for EBS volumes
+enterprise_volume_tags = {
+  VolumeType    = "root"
+  Encrypted     = "true"
+  BackupPolicy  = "daily-7day-retention"
+}
+
+# ============================================================================
+# VPC Configuration (from main infrastructure)
+# ============================================================================
+
+# VPC CIDR block
+vpc_cidr = "10.0.0.0/16"
+
+# Public subnet CIDR block
+public_subnet_cidr = "10.0.1.0/24"
+
+# CIDR blocks allowed for SSH access
+# SECURITY: Replace 0.0.0.0/0 with your specific IP address or range
+# Example: ["203.0.113.0/24", "198.51.100.0/24"]
+allowed_ssh_cidrs = ["0.0.0.0/0"]  # WARNING: This allows SSH from anywhere - restrict in production!
+
+# ============================================================================
+# Configuration Examples by Use Case
+# ============================================================================
+
+# DEVELOPMENT ENVIRONMENT:
+# enterprise_instance_type = "t3.micro"
+# enterprise_root_volume_size = 20
+# enterprise_encrypt_root_volume = false
+# enterprise_enable_monitoring = false
+# enterprise_disable_api_termination = false
+
+# SMALL PRODUCTION:
+# enterprise_instance_type = "t3.medium"
+# enterprise_root_volume_size = 50
+# enterprise_root_volume_type = "gp3"
+# enterprise_encrypt_root_volume = true
+# enterprise_enable_monitoring = true
+# enterprise_disable_api_termination = true
+
+# LARGE PRODUCTION:
+# enterprise_instance_type = "m5.xlarge"
+# enterprise_root_volume_size = 100
+# enterprise_root_volume_type = "gp3"
+# enterprise_encrypt_root_volume = true
+# enterprise_enable_monitoring = true
+# enterprise_ebs_optimized = true
+# enterprise_disable_api_termination = true
+
+# HIGH-PERFORMANCE DATABASE:
+# enterprise_instance_type = "r5.xlarge"
+# enterprise_root_volume_size = 500
+# enterprise_root_volume_type = "io2"
+# enterprise_encrypt_root_volume = true
+# enterprise_enable_monitoring = true
+# enterprise_ebs_optimized = true
+# enterprise_disable_api_termination = true
+
+# ============================================================================
+# Important Notes
+# ============================================================================
+#
+# 1. SSH Key Pair:
+#    - Create the key pair before running terraform apply
+#    - Command: aws ec2 create-key-pair --key-name my-rhel7-key --query 'KeyMaterial' --output text > my-rhel7-key.pem
+#    - Set permissions: chmod 400 my-rhel7-key.pem
+#
+# 2. Security Groups:
+#    - Review and restrict SSH access to known IP ranges
+#    - Do not use 0.0.0.0/0 in production environments
+#
+# 3. Costs:
+#    - t3.micro: ~$8-10/month
+#    - t3.medium: ~$30/month
+#    - m5.large: ~$70/month
+#    - m5.xlarge: ~$140/month
+#    - Add storage costs: ~$0.08/GB/month for gp3
+#
+# 4. Terraform Enterprise:
+#    - Ensure you have access to localterraform.com/ag/instance/aws
+#    - Verify module version compatibility
+#    - Check module documentation for any additional parameters
+#
+# 5. RedHat Subscription:
+#    - RHEL AMIs from AWS Marketplace include subscription costs
+#    - Hourly charges apply in addition to EC2 instance costs
+#
+# ============================================================================

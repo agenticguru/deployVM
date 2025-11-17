@@ -1,0 +1,218 @@
+# ============================================================================
+# Terraform Variables for Red Hat 7 Enterprise Module Deployment
+# ============================================================================
+# Example configuration file for provisioning RHEL 7 EC2 instances using
+# the internal Terraform Enterprise module at localterraform.com/ag/instance/aws
+#
+# Copy this file to terraform.tfvars and customize for your deployment:
+#   cp terraform.tfvars.enterprise_module.example terraform.tfvars
+# ============================================================================
+
+# ============================================================================
+# AWS Configuration
+# ============================================================================
+
+aws_region   = "us-east-1"
+project_name = "rhel7-enterprise"
+environment  = "production"
+
+# ============================================================================
+# Enterprise Module: Core Instance Configuration
+# ============================================================================
+# Based on RedHatProducts repository parameters
+
+# Required: SSH Key Pair
+enterprise_key_name = "my-rhel-production-key"
+
+# Instance Type Selection
+# From RedHatProducts documentation:
+# - t3.micro (default): Development/testing
+# - t3.small/medium: Small to medium workloads
+# - m5.large/xlarge: Production workloads
+# - c5.xlarge: Compute-intensive applications
+enterprise_instance_type = "t3.medium"
+
+# ============================================================================
+# Network Configuration
+# ============================================================================
+# Leave null to use existing VPC infrastructure from main.tf
+
+# Primary instance subnet (if using custom network)
+enterprise_subnet_id = null  # Set to "subnet-xxxxx" if using custom VPC
+
+# Secondary instance subnet for HA (different AZ recommended)
+enterprise_subnet_id_secondary = null
+
+# Security groups (if using custom security groups)
+enterprise_security_group_ids = null  # Set to ["sg-xxxxx"] if using custom
+
+# Specific availability zone (if required)
+enterprise_availability_zone = null  # e.g., "us-east-1a"
+
+# Public IP association
+enterprise_associate_public_ip = true
+
+# ============================================================================
+# Storage Configuration
+# ============================================================================
+# Based on RedHatProducts documentation recommendations:
+# - Minimum 10GB for RHEL OS
+# - Recommended 20GB+ for applications
+# - gp3 for best performance/cost ratio
+
+# Root volume type
+# Options: gp2, gp3 (recommended), io1, io2
+enterprise_root_volume_type = "gp3"
+
+# Root volume size in GB
+# Minimum: 10GB (RHEL OS only)
+# Development: 20-30GB
+# Standard: 50-100GB
+# Production: 100GB+
+enterprise_root_volume_size = 50
+
+# Enable encryption (highly recommended for enterprise)
+enterprise_encrypt_root_volume = true
+
+# Custom KMS key (optional, uses AWS managed key if not specified)
+enterprise_kms_key_id = null  # Set to KMS key ARN if using custom key
+
+# Additional EBS volumes (optional)
+# Example:
+# enterprise_additional_volumes = [
+#   {
+#     device_name           = "/dev/sdf"
+#     volume_type          = "gp3"
+#     volume_size          = 500
+#     encrypted            = true
+#     kms_key_id           = null
+#     delete_on_termination = false
+#   }
+# ]
+enterprise_additional_volumes = []
+
+# ============================================================================
+# Advanced Instance Configuration
+# ============================================================================
+
+# User data for instance bootstrap (optional)
+# Leave null to use default bootstrap script
+enterprise_user_data = null
+
+# Replace instance when user data changes
+enterprise_user_data_replace_on_change = false
+
+# IAM instance profile for AWS service permissions
+enterprise_iam_instance_profile = null  # e.g., "rhel7-instance-profile"
+
+# Enable detailed CloudWatch monitoring
+enterprise_enable_monitoring = true
+
+# Enable EBS optimization for better storage performance
+enterprise_ebs_optimized = true
+
+# Disable API termination (recommended for production)
+enterprise_disable_api_termination = false  # Set to true for production
+
+# Instance shutdown behavior
+enterprise_shutdown_behavior = "stop"  # Options: "stop" or "terminate"
+
+# Source/destination check (disable for NAT instances)
+enterprise_source_dest_check = true
+
+# ============================================================================
+# High Availability Configuration
+# ============================================================================
+
+# Enable multi-AZ deployment
+enable_ha_deployment = false  # Set to true for high availability
+
+# Allocate Elastic IP addresses
+enterprise_allocate_eip = false  # Set to true for static IPs
+
+# ============================================================================
+# Monitoring and Logging
+# ============================================================================
+
+# Create CloudWatch log group
+enable_cloudwatch_logs = true
+
+# Log retention period (days)
+log_retention_days = 30  # Options: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, etc.
+
+# ============================================================================
+# Resource Tagging
+# ============================================================================
+
+owner       = "platform-team"
+cost_center = "infrastructure"
+
+# Additional custom tags
+enterprise_additional_tags = {
+  BusinessUnit = "Technology"
+  Application  = "core-services"
+  Backup       = "required"
+  Compliance   = "required"
+  ManagedBy    = "terraform"
+}
+
+# ============================================================================
+# Example Configurations by Environment
+# ============================================================================
+
+# DEVELOPMENT ENVIRONMENT
+# -----------------------
+# enterprise_instance_type           = "t3.micro"
+# enterprise_root_volume_size        = 20
+# enterprise_disable_api_termination = false
+# enable_ha_deployment              = false
+# enterprise_allocate_eip            = false
+
+# STAGING ENVIRONMENT
+# -------------------
+# enterprise_instance_type           = "t3.small"
+# enterprise_root_volume_size        = 30
+# enterprise_disable_api_termination = false
+# enable_ha_deployment              = false
+# enterprise_allocate_eip            = true
+
+# PRODUCTION ENVIRONMENT
+# ----------------------
+# enterprise_instance_type           = "m5.large"
+# enterprise_root_volume_size        = 100
+# enterprise_disable_api_termination = true
+# enable_ha_deployment              = true
+# enterprise_allocate_eip            = true
+# enable_cloudwatch_logs            = true
+# log_retention_days                = 90
+
+# ============================================================================
+# Additional Configuration Examples
+# ============================================================================
+
+# COMPUTE-INTENSIVE WORKLOAD
+# --------------------------
+# enterprise_instance_type = "c5.xlarge"
+# enterprise_ebs_optimized = true
+# enterprise_root_volume_type = "gp3"
+
+# DATABASE SERVER
+# ---------------
+# enterprise_instance_type = "r5.large"
+# enterprise_root_volume_size = 100
+# enterprise_additional_volumes = [
+#   {
+#     device_name           = "/dev/sdf"
+#     volume_type          = "io2"
+#     volume_size          = 1000
+#     encrypted            = true
+#     delete_on_termination = false
+#   }
+# ]
+
+# WEB SERVER WITH HIGH AVAILABILITY
+# ----------------------------------
+# enterprise_instance_type    = "t3.medium"
+# enable_ha_deployment       = true
+# enterprise_allocate_eip     = true
+# enterprise_associate_public_ip = true
