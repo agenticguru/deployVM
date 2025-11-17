@@ -1,0 +1,116 @@
+# ============================================================================
+# Terraform Variables for Red Hat 7 Enterprise Module Deployment
+# ============================================================================
+# Example configuration file for provisioning RHEL 7 EC2 instances using
+# the internal Terraform Enterprise module at localterraform.com/ag/instance/aws
+#
+# Using ONLY parameters from RedHatProducts repository:
+# - instance_type
+# - key_name
+# - subnet_id
+# - security_group_ids
+# - availability_zone
+# - instance_name
+# - root_volume_type
+# - root_volume_size
+# - encrypt_root_volume
+# - tags
+#
+# Copy this file to terraform.tfvars and customize for your deployment:
+#   cp terraform.tfvars.enterprise_module.example terraform.tfvars
+# ============================================================================
+
+# ============================================================================
+# AWS Configuration
+# ============================================================================
+
+aws_region   = "us-east-1"
+project_name = "rhel7-enterprise"
+environment  = "production"
+
+# ============================================================================
+# Enterprise Module: Core Instance Configuration
+# ============================================================================
+# Based on RedHatProducts repository parameters
+
+# Required: SSH Key Pair (from RedHatProducts repository)
+enterprise_key_name = "my-rhel-production-key"
+
+# Instance Type Selection (from RedHatProducts repository)
+# Options: t3.micro (default), t3.small, t3.medium, m5.large, etc.
+enterprise_instance_type = "t3.medium"
+
+# Instance Name (from RedHatProducts repository)
+enterprise_instance_name = "rhel7-enterprise-production"
+
+# ============================================================================
+# Network Configuration (from RedHatProducts repository)
+# ============================================================================
+
+# VPC subnet ID where the instance will be launched
+enterprise_subnet_id = "subnet-xxxxx"  # Replace with your subnet ID
+
+# Security group IDs to attach to the instance
+enterprise_security_group_ids = ["sg-xxxxx"]  # Replace with your security group IDs
+
+# Availability zone for the primary instance
+enterprise_availability_zone = "us-east-1a"  # Replace with your preferred AZ
+
+# Secondary availability zone for HA deployment (optional)
+enterprise_availability_zone_secondary = "us-east-1b"
+
+# ============================================================================
+# Storage Configuration (from RedHatProducts repository)
+# ============================================================================
+
+# Root volume type (from RedHatProducts repository)
+# Options: gp2, gp3, io1, io2
+enterprise_root_volume_type = "gp3"
+
+# Root volume size in GB (from RedHatProducts repository)
+# Minimum: 10GB, Recommended: 20GB+
+enterprise_root_volume_size = 50
+
+# Enable encryption for root volume (from RedHatProducts repository)
+enterprise_encrypt_root_volume = true
+
+# ============================================================================
+# High Availability Configuration
+# ============================================================================
+
+# Enable multi-AZ deployment with secondary instance
+enable_ha_deployment = false  # Set to true for high availability
+
+# ============================================================================
+# Resource Tagging (from RedHatProducts repository)
+# ============================================================================
+
+# Additional custom tags
+enterprise_additional_tags = {
+  BusinessUnit = "Technology"
+  Application  = "core-services"
+  Backup       = "required"
+  Compliance   = "required"
+}
+
+# ============================================================================
+# Example Configurations by Environment
+# ============================================================================
+
+# DEVELOPMENT ENVIRONMENT
+# -----------------------
+# enterprise_instance_type      = "t3.micro"
+# enterprise_root_volume_size   = 20
+# enable_ha_deployment         = false
+
+# STAGING ENVIRONMENT
+# -------------------
+# enterprise_instance_type      = "t3.small"
+# enterprise_root_volume_size   = 30
+# enable_ha_deployment         = false
+
+# PRODUCTION ENVIRONMENT
+# ----------------------
+# enterprise_instance_type      = "m5.large"
+# enterprise_root_volume_size   = 100
+# enable_ha_deployment         = true
