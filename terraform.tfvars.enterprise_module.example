@@ -1,0 +1,288 @@
+# ============================================================================
+# RedHat 7 EC2 Instance - Enterprise Module Configuration Example
+# ============================================================================
+# This is an example terraform.tfvars file for deploying a RedHat 7 instance
+# Copy this file to terraform.tfvars and customize for your environment
+#
+# Usage:
+#   1. Copy: cp terraform.tfvars.enterprise_module.example terraform.tfvars
+#   2. Edit terraform.tfvars with your specific values
+#   3. Run: terraform init
+#   4. Run: terraform plan
+#   5. Run: terraform apply
+#
+# IMPORTANT: Never commit terraform.tfvars to version control!
+# Add terraform.tfvars to .gitignore
+# ============================================================================
+
+# ============================================================================
+# AWS CONFIGURATION
+# ============================================================================
+
+# AWS region for deployment
+# Options: us-east-1, us-west-2, eu-west-1, ap-southeast-1, etc.
+aws_region = "us-east-1"
+
+# ============================================================================
+# PROJECT CONFIGURATION
+# ============================================================================
+
+# Project name - used for resource naming and cost allocation
+project_name = "redhat-deployment"
+
+# Environment - determines resource tags and naming
+# Options: dev, staging, prod, test, qa
+environment = "dev"
+
+# ============================================================================
+# NETWORK CONFIGURATION
+# ============================================================================
+
+# VPC CIDR block
+vpc_cidr = "10.0.0.0/16"
+
+# Public subnet CIDR block
+public_subnet_cidr = "10.0.1.0/24"
+
+# Associate public IP address with instance
+associate_public_ip_address = true
+
+# Create an Elastic IP (static IP) for the instance
+# Set to true if you need a persistent IP address
+create_elastic_ip = false
+
+# ============================================================================
+# INSTANCE CONFIGURATION
+# ============================================================================
+
+# EC2 Instance Type
+# Development:  t3.micro  (2 vCPU, 1 GB RAM)  - ~$7.50/month
+# Testing:      t3.small  (2 vCPU, 2 GB RAM)  - ~$15/month
+# Staging:      t3.medium (2 vCPU, 4 GB RAM)  - ~$30/month
+# Production:   m5.large  (2 vCPU, 8 GB RAM)  - ~$70/month
+# High-Memory:  r5.large  (2 vCPU, 16 GB RAM) - ~$96/month
+instance_type = "t3.micro"
+
+# SSH Key Pair Name
+# REQUIRED - Must exist in the target AWS region before deployment
+# Create with: aws ec2 create-key-pair --key-name my-key --query 'KeyMaterial' --output text > my-key.pem
+key_name = "my-redhat-key"
+
+# ============================================================================
+# STORAGE CONFIGURATION
+# ============================================================================
+
+# Root volume type
+# Options:
+#   - gp3: General Purpose SSD (RECOMMENDED) - Best price/performance
+#   - gp2: General Purpose SSD (Legacy) - Older generation
+#   - io1: Provisioned IOPS SSD - High performance databases
+#   - io2: Provisioned IOPS SSD - Mission-critical workloads
+root_volume_type = "gp3"
+
+# Root volume size in GB
+# Minimum: 10 GB
+# Recommended: 20 GB (small apps), 50 GB (standard), 100+ GB (databases)
+root_volume_size = 20
+
+# Enable encryption for root volume
+# CRITICAL: Always true for production environments
+encrypt_root_volume = true
+
+# Delete volume when instance is terminated
+# Recommended: true for dev/test, false for production
+delete_on_termination = true
+
+# ============================================================================
+# SECURITY CONFIGURATION
+# ============================================================================
+
+# CIDR blocks allowed to SSH to the instance
+# SECURITY WARNING: Do NOT use ["0.0.0.0/0"] in production!
+# Replace with your organization's IP ranges or VPN CIDR blocks
+# Example: ["203.0.113.0/24", "198.51.100.0/24"]
+allowed_ssh_cidrs = ["0.0.0.0/0"]  # CHANGE THIS FOR PRODUCTION!
+
+# Enable HTTP access (port 80)
+enable_http_access = false
+
+# Enable HTTPS access (port 443)
+enable_https_access = false
+
+# ============================================================================
+# REDHAT-SPECIFIC CONFIGURATION
+# ============================================================================
+
+# Red Hat official AWS account ID (DO NOT CHANGE)
+ami_owner_id = "309956199498"
+
+# AMI name pattern for RHEL 7 (DO NOT CHANGE unless you need a specific version)
+ami_name_pattern = "RHEL-7.*-x86_64-*"
+
+# ============================================================================
+# USER DATA SCRIPT (Optional Customization)
+# ============================================================================
+
+# User data script for instance initialization
+# Uncomment and customize if you need different initialization
+# user_data_script = <<-EOF
+#   #!/bin/bash
+#   yum update -y
+#   yum install -y httpd
+#   systemctl enable httpd
+#   systemctl start httpd
+#   echo "<h1>Hello from RedHat 7</h1>" > /var/www/html/index.html
+# EOF
+
+# ============================================================================
+# TAGS AND METADATA
+# ============================================================================
+
+# Common tags applied to all resources
+common_tags = {
+  Terraform   = "true"
+  Repository  = "deployVM"
+  ManagedBy   = "Terraform-Enterprise"
+  Provisioner = "Enterprise-Module"
+}
+
+# Resource ownership and cost allocation
+owner        = "DevOps-Team"
+cost_center  = "Engineering"
+business_unit = "Technology"
+
+# Application role
+application_role = "application-server"
+
+# Backup policy
+# Options: none, daily, weekly, monthly
+backup_policy = "daily"
+
+# Maintenance window (day of week for updates)
+maintenance_window = "Sunday"
+
+# Compliance requirements
+compliance_requirements = "General"
+
+# Security classification
+# Options: Public, Internal, Confidential, Restricted
+security_level = "Internal"
+
+# Data classification
+# Options: Public, Internal, Sensitive, Restricted
+data_classification = "Internal"
+
+# ============================================================================
+# MONITORING AND ALERTS
+# ============================================================================
+
+# Enable detailed CloudWatch monitoring (1-minute intervals)
+# Note: Additional costs apply for detailed monitoring
+enable_detailed_monitoring = false
+
+# Enable CloudWatch alarms
+enable_cloudwatch_alarms = false
+
+# CPU utilization alarm threshold (percentage)
+cpu_alarm_threshold = 80
+
+# SNS topic ARNs for alarm notifications
+# Example: ["arn:aws:sns:us-east-1:123456789012:my-topic"]
+alarm_actions = []
+
+# ============================================================================
+# ENVIRONMENT-SPECIFIC EXAMPLES
+# ============================================================================
+
+# --- DEVELOPMENT ENVIRONMENT ---
+# Uncomment and customize for dev environment:
+# environment              = "dev"
+# instance_type            = "t3.micro"
+# root_volume_size         = 20
+# enable_detailed_monitoring = false
+# enable_cloudwatch_alarms = false
+# delete_on_termination    = true
+# backup_policy            = "none"
+
+# --- STAGING ENVIRONMENT ---
+# Uncomment and customize for staging environment:
+# environment              = "staging"
+# instance_type            = "t3.medium"
+# root_volume_size         = 50
+# enable_detailed_monitoring = true
+# enable_cloudwatch_alarms = true
+# delete_on_termination    = false
+# backup_policy            = "daily"
+# allowed_ssh_cidrs        = ["10.0.0.0/8"]  # Internal network only
+
+# --- PRODUCTION ENVIRONMENT ---
+# Uncomment and customize for production environment:
+# environment              = "prod"
+# instance_type            = "m5.large"
+# root_volume_size         = 100
+# root_volume_type         = "gp3"
+# encrypt_root_volume      = true
+# enable_detailed_monitoring = true
+# enable_cloudwatch_alarms = true
+# delete_on_termination    = false
+# create_elastic_ip        = true
+# backup_policy            = "daily"
+# allowed_ssh_cidrs        = ["10.0.0.0/8"]  # VPN or internal network
+# enable_https_access      = true
+# security_level           = "Confidential"
+# compliance_requirements  = "SOC2"
+
+# ============================================================================
+# NOTES
+# ============================================================================
+#
+# 1. KEY PAIR REQUIREMENT:
+#    Before deployment, create an EC2 key pair:
+#    aws ec2 create-key-pair --key-name my-key --region us-east-1 \
+#      --query 'KeyMaterial' --output text > my-key.pem
+#    chmod 400 my-key.pem
+#
+# 2. AWS CREDENTIALS:
+#    Ensure AWS credentials are configured:
+#    - Environment variables: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+#    - AWS CLI: aws configure
+#    - IAM role (if running on EC2)
+#
+# 3. TERRAFORM BACKEND:
+#    For team collaboration, configure remote backend (S3 + DynamoDB):
+#    terraform {
+#      backend "s3" {
+#        bucket         = "my-terraform-state"
+#        key            = "redhat7/terraform.tfstate"
+#        region         = "us-east-1"
+#        dynamodb_table = "terraform-state-lock"
+#        encrypt        = true
+#      }
+#    }
+#
+# 4. COST ESTIMATION:
+#    t3.micro:  ~$7.50/month  (Development)
+#    t3.small:  ~$15/month    (Testing)
+#    t3.medium: ~$30/month    (Staging)
+#    m5.large:  ~$70/month    (Production)
+#    + EBS storage costs (~$0.10/GB/month for gp3)
+#    + Data transfer costs
+#    + RHEL subscription (included in instance cost)
+#
+# 5. SECURITY BEST PRACTICES:
+#    - Never use 0.0.0.0/0 for SSH in production
+#    - Always enable encryption (encrypt_root_volume = true)
+#    - Use strong key pairs with passphrases
+#    - Enable CloudWatch alarms for production
+#    - Regular security patches: yum update -y
+#    - Implement least privilege IAM policies
+#
+# 6. HIGH AVAILABILITY:
+#    For production workloads, consider:
+#    - Multiple availability zones
+#    - Auto Scaling Groups
+#    - Elastic Load Balancer
+#    - RDS for databases
+#    - ElastiCache for caching
+#
+# ============================================================================
