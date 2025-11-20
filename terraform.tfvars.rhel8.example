@@ -1,0 +1,102 @@
+# ============================================================================
+# Terraform Variables Configuration for RedHat 8 Deployment
+# ============================================================================
+#
+# Copy this file to terraform.tfvars and customize the values for your environment
+# Command: cp terraform.tfvars.rhel8.example terraform.tfvars
+#
+# ============================================================================
+
+# ============================================================================
+# AWS CONFIGURATION
+# ============================================================================
+
+# AWS Region where resources will be deployed
+# Common regions: us-east-1, us-west-2, eu-west-1, ap-southeast-1
+aws_region = "us-east-1"
+
+# ============================================================================
+# PROJECT CONFIGURATION
+# ============================================================================
+
+# Project name - used as prefix for all resource names
+# Use lowercase, hyphens for separation, no special characters
+project_name = "enterprise-app"
+
+# Environment name - dev, staging, or prod
+# Affects resource sizing, monitoring, and backup policies
+environment = "prod"
+
+# ============================================================================
+# NETWORK CONFIGURATION
+# ============================================================================
+
+# VPC CIDR block for network isolation
+# Ensure it doesn't overlap with existing networks
+vpc_cidr = "10.0.0.0/16"
+
+# Public subnet CIDR within VPC range
+# Used for instances that need internet access
+public_subnet_cidr = "10.0.1.0/24"
+
+# List of CIDR blocks allowed to SSH to instances
+# SECURITY BEST PRACTICE: Replace 0.0.0.0/0 with your specific IP range
+# Example: ["203.0.113.0/24", "198.51.100.0/24"]
+allowed_ssh_cidrs = ["YOUR_IP_ADDRESS/32"]
+
+# ============================================================================
+# COMPUTE CONFIGURATION
+# ============================================================================
+
+# EC2 instance type based on workload requirements
+# Development:  t3.micro (2 vCPU, 1 GB RAM)
+# Small apps:   t3.small (2 vCPU, 2 GB RAM)
+# Standard:     t3.medium (2 vCPU, 4 GB RAM)
+# Production:   m5.large (2 vCPU, 8 GB RAM)
+# High-perf:    m5.xlarge (4 vCPU, 16 GB RAM)
+instance_type = "t3.medium"
+
+# EC2 Key Pair name for SSH access
+# IMPORTANT: Key pair must exist in the AWS region before deployment
+# Create with: aws ec2 create-key-pair --key-name my-rhel8-key --query 'KeyMaterial' --output text > my-rhel8-key.pem
+key_name = "my-rhel8-key"
+
+# ============================================================================
+# STORAGE CONFIGURATION
+# ============================================================================
+
+# Root volume type - EBS volume type for instance boot disk
+# gp3: Best performance/cost ratio, 3000 IOPS baseline (RECOMMENDED)
+# gp2: Previous generation, 3 IOPS/GB
+# io1: Provisioned IOPS, up to 64,000 IOPS (high-cost)
+# io2: Latest provisioned IOPS with better durability (highest-cost)
+root_volume_type = "gp3"
+
+# Root volume size in GB
+# Minimum: 10 GB (RHEL 8 OS requirement)
+# Standard: 20-50 GB (general applications)
+# Database: 100-500 GB (data-intensive workloads)
+root_volume_size = 50
+
+# Enable encryption for root volume
+# SECURITY BEST PRACTICE: Always true for production
+# Required for: HIPAA, PCI-DSS, SOC 2, and most compliance standards
+encrypt_root_volume = true
+
+# ============================================================================
+# USER DATA CONFIGURATION (Optional)
+# ============================================================================
+
+# Custom user data script runs on instance first boot
+# Uncomment and customize as needed for your application setup
+# user_data_script = <<-EOF
+#   #!/bin/bash
+#   # Update system packages
+#   yum update -y
+#   
+#   # Install required packages
+#   yum install -y htop wget curl vim git
+#   
+#   # Configure application
+#   # Add your custom commands here
+# EOF
